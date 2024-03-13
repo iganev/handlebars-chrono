@@ -1,8 +1,7 @@
-use chrono::{DateTime, Local, Locale, Utc};
+use chrono::{DateTime, Locale, Utc};
 use handlebars::{
-    BlockContext, Context, Handlebars, Helper, HelperDef, HelperResult, JsonRender, Output,
-    PathAndJson, RenderContext, RenderError, RenderErrorReason, Renderable, ScopedJson,
-    StringOutput,
+    Context, Handlebars, Helper, HelperDef, HelperResult, Output,
+    RenderContext, RenderError, RenderErrorReason,
 };
 use std::num::ParseIntError;
 use std::str::FromStr;
@@ -42,9 +41,9 @@ impl HelperDef for HandlebarsChronoDateTime {
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
-        r: &'reg Handlebars,
-        ctx: &'rc Context,
-        rc: &mut RenderContext<'reg, 'rc>,
+        _r: &'reg Handlebars,
+        _ctx: &'rc Context,
+        _rc: &mut RenderContext<'reg, 'rc>,
         out: &mut dyn Output,
     ) -> HelperResult {
         // INITIALIZERS
@@ -201,7 +200,7 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             if let Some(locale) = h.hash_get("locale") {
                 let locale = locale.render();
-                let locale = Locale::from_str(&locale).map_err(|e| {
+                let locale = Locale::from_str(&locale).map_err(|_e| {
                     <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
                         format!("Invalid locale provided: {}", &locale),
                     ))
