@@ -1,8 +1,25 @@
 [package]
 name = "handlebars-chrono"
-version = "0.1.0"
+version = "0.2.1"
 edition = "2021"
+authors = ["Ivan Ganev <iganev@cytec.bg>"]
+description = "Handlebars helper for using chrono DateTime"
+keywords = ["handlebars", "helper", "chrono", "date", "datetime"]
+categories = ["template-engine", "web-programming", "value-formatting", "text-processing"]
+homepage = "https://github.com/iganev/handlebars-chrono"
+repository = "https://github.com/iganev/handlebars-chrono"
+documentation = "https://docs.rs/crate/handlebars-chrono/"
+readme = "README.md"
+license = "BSD-2-Clause"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "handlebars_chrono"
+path = "src/lib.rs"
 
 [dependencies]
+handlebars = { version = "^5" }
+chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
+serde_json = { version = "^1" }
+
+[badges]
+maintenance = { status = "actively-developed" }
