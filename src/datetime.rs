@@ -1,7 +1,7 @@
 use chrono::{DateTime, Locale, Utc};
 use handlebars::{
-    Context, Handlebars, Helper, HelperDef, HelperResult, Output,
-    RenderContext, RenderError, RenderErrorReason,
+    Context, Handlebars, Helper, HelperDef, HelperResult, Output, RenderContext, RenderError,
+    RenderErrorReason,
 };
 use std::num::ParseIntError;
 use std::str::FromStr;
@@ -62,7 +62,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             DateTime::from_timestamp(
                 timestamp.parse().map_err(|e: ParseIntError| {
                     <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
-                        format!("Invalid seconds timestamp: {}", e.to_string()),
+                        format!("Invalid seconds timestamp: {}", e),
                     ))
                 })?,
                 0,
@@ -76,7 +76,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             DateTime::from_timestamp_millis(timestamp.parse().map_err(|e: ParseIntError| {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!(
                     "Invalid milli-seconds timestamp: {}",
-                    e.to_string()
+                    e
                 )))
             })?)
             .ok_or::<RenderError>(
@@ -88,7 +88,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             DateTime::from_timestamp_micros(timestamp.parse().map_err(|e: ParseIntError| {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!(
                     "Invalid micro-seconds timestamp: {}",
-                    e.to_string()
+                    e
                 )))
             })?)
             .ok_or::<RenderError>(
@@ -101,7 +101,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             DateTime::from_timestamp_nanos(timestamp.parse().map_err(|e: ParseIntError| {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!(
                     "Invalid nano-seconds timestamp: {}",
-                    e.to_string()
+                    e
                 )))
             })?)
         } else if let Some(input_str) = h.hash_get("from_rfc2822") {
@@ -110,7 +110,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             DateTime::parse_from_rfc2822(&input_str)
                 .map_err(|e| {
                     <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
-                        format!("Invalid RFC2822 datetime format: {}", e.to_string()),
+                        format!("Invalid RFC2822 datetime format: {}", e),
                     ))
                 })?
                 .to_utc()
@@ -120,7 +120,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             DateTime::parse_from_rfc3339(&input_str)
                 .map_err(|e| {
                     <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
-                        format!("Invalid RFC3339 datetime format: {}", e.to_string()),
+                        format!("Invalid RFC3339 datetime format: {}", e),
                     ))
                 })?
                 .to_utc()
@@ -134,7 +134,7 @@ impl HelperDef for HandlebarsChronoDateTime {
                         <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
                             format!(
                                 "Invalid datetime format or format doesn't match input: {}",
-                                e.to_string()
+                                e
                             ),
                         ))
                     })?
@@ -230,7 +230,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             let base_datetime = DateTime::parse_from_rfc3339(&input_rfc3339)
                 .map_err(|e| {
                     <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
-                        format!("Invalid RFC3339 datetime format: {}", e.to_string()),
+                        format!("Invalid RFC3339 datetime format: {}", e),
                     ))
                 })?
                 .to_utc();
@@ -263,7 +263,6 @@ mod tests {
     #[test]
     fn it_works() {
         use handlebars::Handlebars;
-        use serde_json::json;
 
         let mut h = Handlebars::new();
         h.register_helper("datetime", Box::new(HandlebarsChronoDateTime));
