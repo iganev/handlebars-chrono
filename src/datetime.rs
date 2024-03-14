@@ -258,6 +258,7 @@ impl HelperDef for HandlebarsChronoDateTime {
 
 #[cfg(test)]
 mod tests {
+    use chrono::{NaiveDate};
     use super::*;
 
     #[test]
@@ -267,12 +268,88 @@ mod tests {
         let mut h = Handlebars::new();
         h.register_helper("datetime", Box::new(HandlebarsChronoDateTime));
 
+        // default: Utc::now() -> to_rfc3339
         assert_eq!(
             h.render_template(r#"{{datetime}}"#, &String::new())
                 .map(|s| s.as_str()[..16].to_string())
                 .expect("Render error"),
             Utc::now().to_rfc3339().as_str()[..16].to_string(),
             "Failed to render RFC3339 default output"
+        );
+
+        // default to output_format: Utc::now() -> format
+        let comparison = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render format %Y-%m-%d %H:%M:%S"
+        );
+
+        // default to output_format + locale: Utc::now() -> format_localized
+        let comparison = Utc::now().format_localized("%A, %B %C", Locale::fr_FR).to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render localized format %A, %B %C"
+        );
+
+        // default to to_rfc2822: Utc::now() -> to_rfc2822
+        let comparison = Utc::now().to_rfc2822();
+        assert_eq!(
+            h.render_template(r#"{{datetime to_rfc2822=true}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render rfc2822"
+        );
+
+        // default to to_timestamp: Utc::now() -> timestamp
+        let comparison = Utc::now().timestamp().to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime to_timestamp=true}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp"
+        );
+
+        // default to to_timestamp_millis: Utc::now() -> timestamp_millis
+        let comparison = Utc::now().timestamp_millis().to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime to_timestamp_millis=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in milli-seconds"
+        );
+
+        // default to to_timestamp_micros: Utc::now() -> timestamp_micros
+        let comparison = Utc::now().timestamp_micros().to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime to_timestamp_micros=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in micro-seconds"
+        );
+
+        // default to to_timestamp_nanos: Utc::now() -> timestamp_nanos
+        let comparison = Utc::now().timestamp_nanos_opt().unwrap_or(0).to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime to_timestamp_nanos=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in nano-seconds"
+        );
+
+        // default to years_since + (parse_from_rfc3339):
+        let comparison = Utc::now().years_since(NaiveDate::from_ymd_opt(1989, 8, 9).unwrap().and_hms_opt(9, 30, 11).unwrap().and_utc()).unwrap_or(0).to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime years_since="1989-08-09T09:30:11Z"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render years since"
         );
     }
 }
