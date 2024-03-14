@@ -194,7 +194,6 @@ impl HelperDef for HandlebarsChronoDateTime {
         // timestamp_micros
         // timestamp_nanos
         // years_since + (parse_from_rfc3339)
-
         let output = if let Some(output_format) = h.hash_get("output_format") {
             let output_format = output_format.render();
 
@@ -301,7 +300,7 @@ mod tests {
             h.render_template(r#"{{datetime to_rfc2822=true}}"#, &String::new())
                 .expect("Render error"),
             comparison,
-            "Failed to render rfc2822"
+            "Failed to render RFC2822"
         );
 
         // default to to_timestamp: Utc::now() -> timestamp
@@ -351,5 +350,185 @@ mod tests {
             comparison,
             "Failed to render years since"
         );
+
+        //
+
+        // from_timestamp to default: from_timestamp -> to_rfc3339
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().to_rfc3339();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render RFC3339 from timestamp"
+        );
+
+        // from_timestamp to output_format: from_timestamp -> format
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().format("%Y-%m-%d %H:%M:%S").to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211" output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render format %Y-%m-%d %H:%M:%S from timestamp"
+        );
+
+        // from_timestamp to output_format + locale: from_timestamp -> format_localized
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().format_localized("%A, %B %C", Locale::fr_FR).to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render localized format %A, %B %C from timestamp"
+        );
+
+        // from_timestamp to to_rfc2822: from_timestamp -> to_rfc2822
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().to_rfc2822();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211" to_rfc2822=true}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render RFC2822 from timestamp"
+        );
+
+        // from_timestamp to to_timestamp: from_timestamp -> timestamp
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().timestamp().to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211" to_timestamp=true}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp from timestamp"
+        );
+
+        // default to to_timestamp_millis: from_timestamp -> timestamp_millis
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().timestamp_millis().to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211" to_timestamp_millis=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in milli-seconds from timestamp"
+        );
+
+        // from_timestamp to to_timestamp_micros: from_timestamp -> timestamp_micros
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().timestamp_micros().to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211" to_timestamp_micros=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in micro-seconds from timestamp"
+        );
+
+        // from_timestamp to to_timestamp_nanos: from_timestamp -> timestamp_nanos
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().timestamp_nanos_opt().unwrap_or(0).to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211" to_timestamp_nanos=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in nano-seconds from timestamp"
+        );
+
+        // from_timestamp to years_since + (parse_from_rfc3339)
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().years_since(NaiveDate::from_ymd_opt(1985, 6, 16).unwrap().and_hms_opt(12, 00, 00).unwrap().and_utc()).unwrap_or(0).to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp="618658211" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render years since from timestamp"
+        );
+
+        //
+
+        // from_timestamp_millis to default: from_timestamp -> to_rfc3339
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().to_rfc3339();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render RFC3339 from timestamp in milli-seconds"
+        );
+
+        // from_timestamp_millis to output_format: from_timestamp -> format
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().format("%Y-%m-%d %H:%M:%S").to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render format %Y-%m-%d %H:%M:%S from timestamp in milli-seconds"
+        );
+
+        // from_timestamp_millis to output_format + locale: from_timestamp -> format_localized
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().format_localized("%A, %B %C", Locale::fr_FR).to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render localized format %A, %B %C from timestamp in milli-seconds"
+        );
+
+        // from_timestamp_millis to to_rfc2822: from_timestamp -> to_rfc2822
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().to_rfc2822();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" to_rfc2822=true}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render RFC2822 from timestamp in milli-seconds"
+        );
+
+        // from_timestamp_millis to to_timestamp: from_timestamp -> timestamp
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().timestamp().to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" to_timestamp=true}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp from timestamp in milli-seconds"
+        );
+
+        // from_timestamp_millis to to_timestamp_millis: from_timestamp -> timestamp_millis
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().timestamp_millis().to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" to_timestamp_millis=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in milli-seconds from timestamp in milli-seconds"
+        );
+
+        // from_timestamp_millis to to_timestamp_micros: from_timestamp -> timestamp_micros
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().timestamp_micros().to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" to_timestamp_micros=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in micro-seconds from timestamp in milli-seconds"
+        );
+
+        // from_timestamp_millis to to_timestamp_nanos: from_timestamp -> timestamp_nanos
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().timestamp_nanos_opt().unwrap_or(0).to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" to_timestamp_nanos=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in nano-seconds from timestamp in milli-seconds"
+        );
+
+        // from_timestamp_millis to years_since + (parse_from_rfc3339)
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().years_since(NaiveDate::from_ymd_opt(1989, 8, 9).unwrap().and_hms_opt(9, 30, 11).unwrap().and_utc()).unwrap_or(0).to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" years_since="1989-08-09T09:30:11Z"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render years since from timestamp in milli-seconds"
+        );
+
+        //
+
+        // from_timestamp_micros (micros)
+        // from_timestamp_nanos (nanos)
+        // parse_from_rfc2822
+        // parse_from_rfc3339
+        // parse_from_str + input_format
     }
 }
