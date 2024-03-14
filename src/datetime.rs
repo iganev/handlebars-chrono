@@ -343,9 +343,9 @@ mod tests {
         );
 
         // default to years_since + (parse_from_rfc3339):
-        let comparison = Utc::now().years_since(NaiveDate::from_ymd_opt(1989, 8, 9).unwrap().and_hms_opt(9, 30, 11).unwrap().and_utc()).unwrap_or(0).to_string();
+        let comparison = Utc::now().years_since(NaiveDate::from_ymd_opt(1985, 6, 16).unwrap().and_hms_opt(12, 00, 00).unwrap().and_utc()).unwrap_or(0).to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime years_since="1989-08-09T09:30:11Z"}}"#, &String::new())
+            h.render_template(r#"{{datetime years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
                 .expect("Render error"),
             comparison,
             "Failed to render years since"
@@ -517,9 +517,9 @@ mod tests {
         );
 
         // from_timestamp_millis to years_since + (parse_from_rfc3339)
-        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().years_since(NaiveDate::from_ymd_opt(1989, 8, 9).unwrap().and_hms_opt(9, 30, 11).unwrap().and_utc()).unwrap_or(0).to_string();
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().years_since(NaiveDate::from_ymd_opt(1985, 6, 16).unwrap().and_hms_opt(12, 00, 00).unwrap().and_utc()).unwrap_or(0).to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" years_since="1989-08-09T09:30:11Z"}}"#, &String::new())
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
                 .expect("Render error"),
             comparison,
             "Failed to render years since from timestamp in milli-seconds"
@@ -603,9 +603,9 @@ mod tests {
         );
 
         // from_timestamp_micros to years_since + (parse_from_rfc3339)
-        let comparison = DateTime::from_timestamp_micros(618658211123456).unwrap().years_since(NaiveDate::from_ymd_opt(1989, 8, 9).unwrap().and_hms_opt(9, 30, 11).unwrap().and_utc()).unwrap_or(0).to_string();
+        let comparison = DateTime::from_timestamp_micros(618658211123456).unwrap().years_since(NaiveDate::from_ymd_opt(1985, 6, 16).unwrap().and_hms_opt(12, 00, 00).unwrap().and_utc()).unwrap_or(0).to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_micros="618658211123456" years_since="1989-08-09T09:30:11Z"}}"#, &String::new())
+            h.render_template(r#"{{datetime from_timestamp_micros="618658211123456" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
                 .expect("Render error"),
             comparison,
             "Failed to render years since from timestamp in micro-seconds"
@@ -689,9 +689,9 @@ mod tests {
         );
 
         // from_timestamp_nanos to years_since + (parse_from_rfc3339)
-        let comparison = DateTime::from_timestamp_nanos(618658211123456789).years_since(NaiveDate::from_ymd_opt(1989, 8, 9).unwrap().and_hms_opt(9, 30, 11).unwrap().and_utc()).unwrap_or(0).to_string();
+        let comparison = DateTime::from_timestamp_nanos(618658211123456789).years_since(NaiveDate::from_ymd_opt(1985, 6, 16).unwrap().and_hms_opt(12, 00, 00).unwrap().and_utc()).unwrap_or(0).to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789" years_since="1989-08-09T09:30:11Z"}}"#, &String::new())
+            h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
                 .expect("Render error"),
             comparison,
             "Failed to render years since from timestamp in nano-seconds"
@@ -700,5 +700,91 @@ mod tests {
         // parse_from_rfc2822
         // parse_from_rfc3339
         // parse_from_str + input_format
+
+        //
+
+        // from_rfc2822 to default: parse_from_rfc2822 -> to_rfc3339
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().to_rfc3339();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render RFC3339 from RFC2822"
+        );
+
+        // from_rfc2822 to output_format: parse_from_rfc2822 -> format
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().format("%Y-%m-%d %H:%M:%S").to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render format %Y-%m-%d %H:%M:%S from RFC2822"
+        );
+
+        // from_rfc2822 to output_format + locale: parse_from_rfc2822 -> format_localized
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().format_localized("%A, %B %C", Locale::fr_FR).to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render localized format %A, %B %C from RFC2822"
+        );
+
+        // from_rfc2822 to to_rfc2822: parse_from_rfc2822 -> to_rfc2822
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().to_rfc2822();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_rfc2822=true}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render RFC2822 from RFC2822"
+        );
+
+        // from_rfc2822 to to_timestamp: parse_from_rfc2822 -> timestamp
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().timestamp().to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp=true}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp from RFC2822"
+        );
+
+        // from_rfc2822 to to_timestamp_millis: parse_from_rfc2822 -> timestamp_millis
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().timestamp_millis().to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_millis=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in milli-seconds from RFC2822"
+        );
+
+        // from_rfc2822 to to_timestamp_micros: parse_from_rfc2822 -> timestamp_micros
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().timestamp_micros().to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_micros=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in micro-seconds from RFC2822"
+        );
+
+        // from_rfc2822 to to_timestamp_nanos: parse_from_rfc2822 -> timestamp_nanos
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().timestamp_nanos_opt().unwrap_or(0).to_string().as_str()[..9].to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_nanos=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
+            comparison,
+            "Failed to render timestamp in nano-seconds from RFC2822"
+        );
+
+        // from_rfc2822 to years_since + (parse_from_rfc3339)
+        let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200").unwrap().to_utc().years_since(NaiveDate::from_ymd_opt(1985, 6, 16).unwrap().and_hms_opt(12, 00, 00).unwrap().and_utc()).unwrap_or(0).to_string();
+        assert_eq!(
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
+                .expect("Render error"),
+            comparison,
+            "Failed to render years since from RFC2822"
+        );
     }
 }
