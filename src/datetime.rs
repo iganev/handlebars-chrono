@@ -1,10 +1,11 @@
-use chrono::{DateTime, Locale, NaiveDateTime, Utc};
+use chrono::{Datelike, DateTime, Days, FixedOffset, Local, Locale, Months, NaiveDateTime, TimeDelta, Timelike, Utc};
 use handlebars::{
     Context, Handlebars, Helper, HelperDef, HelperResult, Output, RenderContext, RenderError,
     RenderErrorReason,
 };
 use std::num::ParseIntError;
 use std::str::FromStr;
+use chrono_tz::{Tz};
 
 #[derive(Clone, Copy)]
 /// Chrono DateTime helper for Handlebars
@@ -172,7 +173,7 @@ impl HelperDef for HandlebarsChronoDateTime {
         // add_secs
         // add_milliseconds
         // add_microseconds
-        // add_nanos
+        // add_nanoseconds
         // sub_months
         // sub_weeks
         // sub_days
@@ -181,7 +182,408 @@ impl HelperDef for HandlebarsChronoDateTime {
         // sub_secs
         // sub_milliseconds
         // sub_microseconds
-        // sub_nanos
+        // sub_nanoseconds
+        let datetime = if let Some(timezone) = h.hash_get("with_timezone") {
+            let timezone = timezone.render();
+            let tz: FixedOffset = if timezone.to_lowercase() == "local" {
+                Local::now().fixed_offset().timezone()
+            } else if timezone.contains('0') {
+                if let Ok(tz) = FixedOffset::from_str(&timezone) {
+                    tz
+                } else {
+                    return Err(RenderErrorReason::Other(
+                        "Failed to parse timezone offset. Supported values are IANA timezones, local or valid fixed offset".to_string(),
+                    )
+                    .into());
+                }
+            } else if let Ok(tz) = timezone.parse::<Tz>() {
+                datetime.with_timezone(&tz).fixed_offset().timezone()
+            } else {
+                return Err(RenderErrorReason::Other(
+                    "Failed to parse IANA timezone. Supported values are IANA timezones, local or valid fixed offset".to_string(),
+                )
+                .into());
+            };
+
+            datetime.with_timezone(&tz)
+        } else {
+            datetime.fixed_offset()
+        };
+
+        let datetime = if let Some(day) = h.hash_get("with_ordinal") {
+            let day = day.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid ordinal parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_ordinal(day).ok_or::<RenderError>(
+                RenderErrorReason::Other("Ordinal parameter out of range".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(day) = h.hash_get("with_ordinal0") {
+            let day = day.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid ordinal parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_ordinal0(day).ok_or::<RenderError>(
+                RenderErrorReason::Other("Ordinal parameter out of range".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(year) = h.hash_get("with_year") {
+            let year = year.render().parse::<i32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid year parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_year(year).ok_or::<RenderError>(
+                RenderErrorReason::Other("Year parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(month) = h.hash_get("with_month") {
+            let month = month.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid month parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_month(month).ok_or::<RenderError>(
+                RenderErrorReason::Other("Month parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(month) = h.hash_get("with_month0") {
+            let month = month.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid month parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_month0(month).ok_or::<RenderError>(
+                RenderErrorReason::Other("Month parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(day) = h.hash_get("with_day") {
+            let day = day.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid day parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_day(day).ok_or::<RenderError>(
+                RenderErrorReason::Other("Day parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(day) = h.hash_get("with_day0") {
+            let day = day.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid day parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_day0(day).ok_or::<RenderError>(
+                RenderErrorReason::Other("Day parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(hour) = h.hash_get("with_hour") {
+            let hour = hour.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid hour parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_hour(hour).ok_or::<RenderError>(
+                RenderErrorReason::Other("Hour parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(min) = h.hash_get("with_minute") {
+            let min = min.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid minute parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_minute(min).ok_or::<RenderError>(
+                RenderErrorReason::Other("Minute parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(sec) = h.hash_get("with_second") {
+            let sec = sec.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid second parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_second(sec).ok_or::<RenderError>(
+                RenderErrorReason::Other("Second parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(nsec) = h.hash_get("with_nanosecond") {
+            let nsec = nsec.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid nano-second parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.with_nanosecond(nsec).ok_or::<RenderError>(
+                RenderErrorReason::Other("Nano-second parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(months) = h.hash_get("add_months") {
+            let months = months.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid months parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_months(Months::new(months)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Months parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(weeks) = h.hash_get("add_weeks") {
+            let weeks = weeks.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid weeks parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_signed(TimeDelta::try_weeks(weeks).ok_or::<RenderError>(
+                RenderErrorReason::Other("Weeks parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Weeks parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(days) = h.hash_get("add_days") {
+            let days = days.render().parse::<u64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid days parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_days(Days::new(days)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Days parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(hours) = h.hash_get("add_hours") {
+            let hours = hours.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid hours parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_signed(TimeDelta::try_hours(hours).ok_or::<RenderError>(
+                RenderErrorReason::Other("Hours parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Hours parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(min) = h.hash_get("add_minutes") {
+            let min = min.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid minutes parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_signed(TimeDelta::try_minutes(min).ok_or::<RenderError>(
+                RenderErrorReason::Other("Minutes parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Minutes parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(sec) = h.hash_get("add_seconds") {
+            let sec = sec.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid seconds parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_signed(TimeDelta::try_seconds(sec).ok_or::<RenderError>(
+                RenderErrorReason::Other("Seconds parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Seconds parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(msec) = h.hash_get("add_milliseconds") {
+            let msec = msec.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid milli-seconds parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_signed(TimeDelta::try_milliseconds(msec).ok_or::<RenderError>(
+                RenderErrorReason::Other("Milli-seconds parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Milli-seconds parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(usec) = h.hash_get("add_microseconds") {
+            let usec = usec.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid micro-seconds parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_signed(TimeDelta::microseconds(usec)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Micro-seconds parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(nsec) = h.hash_get("add_nanoseconds") {
+            let nsec = nsec.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid nano-seconds parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_add_signed(TimeDelta::nanoseconds(nsec)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Nano-seconds parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
 
         // FINALIZERS
 
@@ -235,7 +637,7 @@ impl HelperDef for HandlebarsChronoDateTime {
                 .to_utc();
 
             datetime
-                .years_since(base_datetime)
+                .years_since(base_datetime.into())
                 .ok_or::<RenderError>(
                     RenderErrorReason::Other(
                         "Negative range, try swapping the parameters.".to_string(),

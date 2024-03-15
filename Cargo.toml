@@ -19,6 +19,7 @@ path = "src/lib.rs"
 [dependencies]
 handlebars = { version = "^5" }
 chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
+chrono-tz = "^0.8"
 serde_json = { version = "^1" }
 
 [badges]
