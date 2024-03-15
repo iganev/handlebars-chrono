@@ -408,6 +408,8 @@ impl HelperDef for HandlebarsChronoDateTime {
             datetime
         };
 
+        // add_
+
         let datetime = if let Some(months) = h.hash_get("add_months") {
             let months = months.render().parse::<u32>().map_err(|e| {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
@@ -578,6 +580,185 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime.checked_add_signed(TimeDelta::nanoseconds(nsec)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Nano-seconds parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        // sub_
+
+        let datetime = if let Some(months) = h.hash_get("sub_months") {
+            let months = months.render().parse::<u32>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid months parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_months(Months::new(months)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Months parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(weeks) = h.hash_get("sub_weeks") {
+            let weeks = weeks.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid weeks parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_signed(TimeDelta::try_weeks(weeks).ok_or::<RenderError>(
+                RenderErrorReason::Other("Weeks parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Weeks parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(days) = h.hash_get("sub_days") {
+            let days = days.render().parse::<u64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid days parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_days(Days::new(days)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Days parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(hours) = h.hash_get("sub_hours") {
+            let hours = hours.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid hours parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_signed(TimeDelta::try_hours(hours).ok_or::<RenderError>(
+                RenderErrorReason::Other("Hours parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Hours parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(min) = h.hash_get("sub_minutes") {
+            let min = min.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid minutes parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_signed(TimeDelta::try_minutes(min).ok_or::<RenderError>(
+                RenderErrorReason::Other("Minutes parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Minutes parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(sec) = h.hash_get("sub_seconds") {
+            let sec = sec.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid seconds parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_signed(TimeDelta::try_seconds(sec).ok_or::<RenderError>(
+                RenderErrorReason::Other("Seconds parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Seconds parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(msec) = h.hash_get("sub_milliseconds") {
+            let msec = msec.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid milli-seconds parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_signed(TimeDelta::try_milliseconds(msec).ok_or::<RenderError>(
+                RenderErrorReason::Other("Milli-seconds parameter out of range".to_string())
+                    .into(),
+            )?).ok_or::<RenderError>(
+                RenderErrorReason::Other("Milli-seconds parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(usec) = h.hash_get("sub_microseconds") {
+            let usec = usec.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid micro-seconds parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_signed(TimeDelta::microseconds(usec)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Micro-seconds parameter out of range or produces invalid date".to_string())
+                    .into(),
+            )?
+        } else {
+            datetime
+        };
+
+        let datetime = if let Some(nsec) = h.hash_get("sub_nanoseconds") {
+            let nsec = nsec.render().parse::<i64>().map_err(|e| {
+                <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                    format!(
+                        "Invalid nano-seconds parameter: {}",
+                        e
+                    ),
+                ))
+            })?;
+
+            datetime.checked_sub_signed(TimeDelta::nanoseconds(nsec)).ok_or::<RenderError>(
                 RenderErrorReason::Other("Nano-seconds parameter out of range or produces invalid date".to_string())
                     .into(),
             )?
