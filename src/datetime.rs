@@ -714,12 +714,12 @@ mod tests {
         // default to output_format + locale: Utc::now() -> format_localized
         #[cfg(feature = "locale")]
         let comparison = Utc::now()
-            .format_localized("%A, %B %C", Locale::fr_FR)
+            .format_localized("%A, %B %e", Locale::fr_FR)
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(
-                r#"{{datetime output_format="%A, %B %C" locale="fr_FR"}}"#,
+                r#"{{datetime output_format="%A, %B %e" locale="fr_FR"}}"#,
                 &String::new()
             )
             .expect("Render error"),
@@ -946,6 +946,15 @@ mod tests {
             comparison,
             "Failed to render years since from timestamp"
         );
+        assert_eq!(
+            h.render_template(
+                r#"{{datetime from_timestamp="618658211" years_since=(datetime from_timestamp="487771200")}}"#,
+                &String::new()
+            )
+                .expect("Render error"),
+            comparison,
+            "Failed to render years since from timestamp"
+        );
 
         //
 
@@ -979,11 +988,11 @@ mod tests {
         #[cfg(feature = "locale")]
         let comparison = DateTime::from_timestamp_millis(618658211123)
             .unwrap()
-            .format_localized("%A, %B %C", Locale::fr_FR)
+            .format_localized("%A, %B %e", Locale::fr_FR)
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" output_format="%A, %B %e" locale="fr_FR"}}"#, &String::new())
                 .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C from timestamp in milli-seconds"
@@ -1872,18 +1881,18 @@ mod tests {
 
         let comparison = DateTime::from_timestamp(618658211, 0)
             .unwrap()
-            .with_ordinal0(43)
+            .with_ordinal0(41)
             .unwrap()
             .timestamp()
             .to_string();
         assert_eq!(
             h.render_template(
-                r#"{{datetime from_timestamp="618658211" with_ordinal0="43" to_timestamp=true}}"#,
+                r#"{{datetime from_timestamp="618658211" with_ordinal0="41" to_timestamp=true}}"#,
                 &String::new()
             )
             .expect("Render error"),
             comparison,
-            "Failed to render timestamp from timestamp with ordinal0 43"
+            "Failed to render timestamp from timestamp with ordinal0 41"
         );
 
         let comparison = DateTime::from_timestamp(618658211, 0)

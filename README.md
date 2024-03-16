@@ -40,7 +40,7 @@ By default, if no parameters are supplied to the helper it produces a RFC3339 cu
 ### Parameters
 
 There are 3 groups of possible parameters in various different combinations:
-- Initializers: Parameters controlling how the `chrono::DateTime` is being contructed. All initializers produce a `DateTime<Utc>` internally.
+- Initializers: Parameters controlling how the `chrono::DateTime` is being constructed. All initializers produce a `DateTime<Utc>` internally.
 - Modifiers: Parameters modifying the internally constructed `DateTime<Utc>`. At this stage the internal `DateTime` gets converted to `DateTime<FixedOffset>` to support all possible modifiers and finalizers. By default, the `FixedOffset` remains tied to UTC.
 - Finalizers: Parameters determining how the internal `DateTime` will get output as `String`
 
@@ -109,6 +109,96 @@ Other possible finalizers:
 - `years_since`: Takes a RFC3339 formatted date time to compare against the internal `DateTime` and calculate the years difference. The `years_since` value must be the further in the past.
 
 ### Examples
+
+Current date and time in RFC3339:
+```handlebars
+{{datetime}}
+```
+
+Current date and time in format like `2024-03-16 15:39:42`:
+```handlebars
+{{datetime output_format="%Y-%m-%d %H:%M:%S"}}
+```
+
+Calendar date in French, for example `samedi, mars 16`:    
+```handlebars
+{{datetime output_format="%A, %B %e" locale="fr_FR"}}
+```
+
+Current date and time in RFC2822, like `Sat, 16 Mar 2024 21:43:31 +0000`:
+```handlebars
+{{datetime to_rfc2822=true}}
+```
+
+Current UNIX timestamp:
+```handlebars
+{{datetime to_timestamp=true}}
+```
+
+Years since June 1985:
+```handlebars
+{{datetime years_since="1985-06-16T12:00:00Z"}}
+```
+
+Reformat a UNIX timestamp to MySQL datetime:
+```handlebars
+{{datetime from_timestamp="618658211" output_format="%Y-%m-%d %H:%M:%S"}}
+```
+
+Years between two dates in the past:
+```handlebars
+{{datetime from_timestamp="618658211" years_since="1985-06-16T12:00:00Z"}}
+```
+
+Years between two dates in the past, but with UNIX timestamps only:
+```handlebars
+{{datetime from_timestamp="618658211" years_since=(datetime from_timestamp="487771200")}}
+```
+
+From UNIX timestamp in milli-seconds to calendar date in French (ex. `mercredi, août  9`):
+```handlebars
+{{datetime from_timestamp_millis="618658211123" output_format="%A, %B %e" locale="fr_FR"}}
+```
+
+From RFC2822 date time to MySQL datetime:
+```handlebars
+{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" output_format="%Y-%m-%d %H:%M:%S"}}
+```
+
+From RFC3339 to RFC2822:
+```handlebars
+{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" to_rfc2822=true}}
+```
+
+From MySQL datetime to RFC2822:
+```handlebars
+{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_rfc2822=true}}
+```
+
+From/To RFC3339 with timezone change:
+```handlebars
+{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" with_timezone="America/Edmonton"}}
+```
+
+Switch from August to November:
+```handlebars
+{{datetime from_timestamp="618658211" with_month="11" to_timestamp=true}}
+```
+
+Switch from the 9th to the 11th:
+```handlebars
+{{datetime from_timestamp="618658211" with_day="11" to_timestamp=true}}
+```
+
+Add 24 months:
+```handlebars
+{{datetime from_timestamp="618658211" add_months="24" to_timestamp=true}}
+```
+
+Subtract 4 weeks:
+```handlebars
+{{datetime from_timestamp="618658211" sub_weeks="4" to_timestamp=true}}
+```
 
 ## License
 
