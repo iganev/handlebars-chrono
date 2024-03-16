@@ -1,0 +1,6 @@
+# https://rust-lang.github.io/rustfmt
+
+max_width = 140
+
+# Uncoment these when they become stable
+# group_imports = "StdExternalCrate"
