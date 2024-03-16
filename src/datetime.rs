@@ -1,7 +1,10 @@
 use chrono::{
-    DateTime, Datelike, Days, FixedOffset, Local, Locale, Months, NaiveDateTime, TimeDelta,
+    DateTime, Datelike, Days, FixedOffset, Local, Months, NaiveDateTime, TimeDelta,
     Timelike, Utc,
 };
+#[cfg(feature = "locale")]
+use chrono::Locale;
+#[cfg(feature = "timezone")]
 use chrono_tz::Tz;
 use handlebars::{
     Context, Handlebars, Helper, HelperDef, HelperResult, Output, RenderContext, RenderError,
@@ -172,10 +175,16 @@ impl HelperDef for HandlebarsChronoDateTime {
                 } else {
                     return Err(RenderErrorReason::Other("Failed to parse timezone offset. Supported values are IANA timezones, local or valid fixed offset".to_string(), ).into());
                 }
-            } else if let Ok(tz) = timezone.parse::<Tz>() {
-                datetime.with_timezone(&tz).fixed_offset().timezone()
             } else {
-                return Err(RenderErrorReason::Other("Failed to parse IANA timezone. Supported values are IANA timezones, local or valid fixed offset".to_string(), ).into());
+                #[cfg(feature = "timezone")]
+                if let Ok(tz) = timezone.parse::<Tz>() {
+                    datetime.with_timezone(&tz).fixed_offset().timezone()
+                } else {
+                    return Err(RenderErrorReason::Other("Failed to parse IANA timezone. Supported values are IANA timezones, local or valid fixed offset".to_string(), ).into());
+                }
+
+                #[cfg(not(feature = "timezone"))]
+                return Err(RenderErrorReason::Other("You need to enable the `timezone` feature of the `handlebars-chrono` create for IANA timezones to work.".to_string(), ).into());
             };
 
             datetime.with_timezone(&tz)
@@ -611,13 +620,18 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             if let Some(locale) = h.hash_get("locale") {
                 let locale = locale.render();
-                let locale = Locale::from_str(&locale).map_err(|_e| {
-                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
-                        format!("Invalid locale provided: {}", &locale),
-                    ))
-                })?;
+                #[cfg(feature = "locale")]
+                {
+                    let locale = Locale::from_str(&locale).map_err(|_e| {
+                        <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
+                            format!("Invalid locale provided: {}", &locale),
+                        ))
+                    })?;
 
-                format!("{}", datetime.format_localized(&output_format, locale))
+                    format!("{}", datetime.format_localized(&output_format, locale))
+                }
+                #[cfg(not(feature = "locale"))]
+                return Err(RenderErrorReason::Other(format!("You need to enable the `locale` feature of `handlebars-chrono` for the `locale`={} param to work.", locale)).into())
             } else {
                 format!("{}", datetime.format(&output_format))
             }
@@ -696,10 +710,13 @@ mod tests {
             "Failed to render format %Y-%m-%d %H:%M:%S"
         );
 
+
         // default to output_format + locale: Utc::now() -> format_localized
+        #[cfg(feature = "locale")]
         let comparison = Utc::now()
             .format_localized("%A, %B %C", Locale::fr_FR)
             .to_string();
+        #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(
                 r#"{{datetime output_format="%A, %B %C" locale="fr_FR"}}"#,
@@ -811,10 +828,12 @@ mod tests {
         );
 
         // from_timestamp to output_format + locale: from_timestamp -> format_localized
+        #[cfg(feature = "locale")]
         let comparison = DateTime::from_timestamp(618658211, 0)
             .unwrap()
             .format_localized("%A, %B %C", Locale::fr_FR)
             .to_string();
+        #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(r#"{{datetime from_timestamp="618658211" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
                 .expect("Render error"),
@@ -957,10 +976,12 @@ mod tests {
         );
 
         // from_timestamp_millis to output_format + locale: from_timestamp_millis -> format_localized
+        #[cfg(feature = "locale")]
         let comparison = DateTime::from_timestamp_millis(618658211123)
             .unwrap()
             .format_localized("%A, %B %C", Locale::fr_FR)
             .to_string();
+        #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(r#"{{datetime from_timestamp_millis="618658211123" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
                 .expect("Render error"),
@@ -1100,10 +1121,12 @@ mod tests {
         );
 
         // from_timestamp_micros to output_format + locale: from_timestamp_micros -> format_localized
+        #[cfg(feature = "locale")]
         let comparison = DateTime::from_timestamp_micros(618658211123456)
             .unwrap()
             .format_localized("%A, %B %C", Locale::fr_FR)
             .to_string();
+        #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(r#"{{datetime from_timestamp_micros="618658211123456" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
                 .expect("Render error"),
@@ -1240,9 +1263,11 @@ mod tests {
         );
 
         // from_timestamp_nanos to output_format + locale: from_timestamp_nanos -> format_localized
+        #[cfg(feature = "locale")]
         let comparison = DateTime::from_timestamp_nanos(618658211123456789)
             .format_localized("%A, %B %C", Locale::fr_FR)
             .to_string();
+        #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
                 .expect("Render error"),
@@ -1371,11 +1396,13 @@ mod tests {
         );
 
         // from_rfc2822 to output_format + locale: parse_from_rfc2822 -> format_localized
+        #[cfg(feature = "locale")]
         let comparison = DateTime::parse_from_rfc2822("Wed, 09 Aug 1989 09:30:11 +0200")
             .unwrap()
             .to_utc()
             .format_localized("%A, %B %C", Locale::fr_FR)
             .to_string();
+        #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
                 .expect("Render error"),
@@ -1514,11 +1541,13 @@ mod tests {
         );
 
         // from_rfc3339 to output_format + locale: parse_from_rfc3339 -> format_localized
+        #[cfg(feature = "locale")]
         let comparison = DateTime::parse_from_rfc3339("1989-08-09T09:30:11+02:00")
             .unwrap()
             .to_utc()
             .format_localized("%A, %B %C", Locale::fr_FR)
             .to_string();
+        #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
                 .expect("Render error"),
@@ -1668,11 +1697,13 @@ mod tests {
         );
 
         // from_str to output_format + locale: parse_from_str -> format_localized
+        #[cfg(feature = "locale")]
         let comparison = NaiveDateTime::parse_from_str("1989-08-09 09:30:11", "%Y-%m-%d %H:%M:%S")
             .unwrap()
             .and_utc()
             .format_localized("%A, %B %C", Locale::fr_FR)
             .to_string();
+        #[cfg(feature = "locale")]
         assert_eq!(
             h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
                 .expect("Render error"),
@@ -1776,11 +1807,13 @@ mod tests {
 
         // modifiers
 
+        #[cfg(feature = "timezone")]
         let comparison = DateTime::parse_from_rfc3339("1989-08-09T09:30:11+02:00")
             .unwrap()
             .to_utc()
             .with_timezone(&Tz::America__Edmonton)
             .to_rfc3339();
+        #[cfg(feature = "timezone")]
         assert_eq!(
             h.render_template(
                 r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" with_timezone="America/Edmonton"}}"#,
@@ -2408,6 +2441,7 @@ mod tests {
 
         //
 
+        #[cfg(feature = "locale")]
         assert!(
             matches!(
                 h.render_template(

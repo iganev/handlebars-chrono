@@ -16,10 +16,16 @@ license = "BSD-2-Clause"
 name = "handlebars_chrono"
 path = "src/lib.rs"
 
+[features]
+locale = [ "chrono/unstable-locales" ]
+timezone = [ "dep:chrono-tz"]
+
 [dependencies]
 handlebars = { version = "^5" }
-chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
-chrono-tz = "^0.8"
+chrono = { version = "^0.4", features = ["serde"] }
+chrono-tz = { version = "^0.8", optional = true }
+
+[dev-dependencies]
 serde_json = { version = "^1" }
 
 [badges]
