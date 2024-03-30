@@ -1,7 +1,7 @@
 [![Crates.io](https://img.shields.io/crates/v/handlebars-chrono?color=4d76ae)](https://crates.io/crates/handlebars-chrono)
 [![API](https://docs.rs/handlebars-chrono/badge.svg)](https://docs.rs/handlebars-chrono)
 [![dependency status](https://deps.rs/repo/github/iganev/handlebars-chrono/status.svg)](https://deps.rs/repo/github/iganev/handlebars-chrono)
-[![Build and Test](https://github.com/iganev/handlebars-chrono/actions/workflows/rust.yml/badge.svg)](https://github.com/iganev/handlebars-chrono/actions/workflows/rust.yml)
+[![build and test](https://github.com/iganev/handlebars-chrono/actions/workflows/rust.yml/badge.svg)](https://github.com/iganev/handlebars-chrono/actions/workflows/rust.yml)
 [![codecov](https://codecov.io/github/iganev/handlebars-chrono/graph/badge.svg?token=B5P2TAV5BB)](https://codecov.io/github/iganev/handlebars-chrono)
 
 
