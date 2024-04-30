@@ -1,15 +1,9 @@
-use chrono::{
-    DateTime, Datelike, Days, FixedOffset, Local, Months, NaiveDateTime, TimeDelta,
-    Timelike, Utc,
-};
 #[cfg(feature = "locale")]
 use chrono::Locale;
+use chrono::{DateTime, Datelike, Days, FixedOffset, Local, Months, NaiveDateTime, TimeDelta, Timelike, Utc};
 #[cfg(feature = "timezone")]
 use chrono_tz::Tz;
-use handlebars::{
-    Context, Handlebars, Helper, HelperDef, HelperResult, Output, RenderContext, RenderError,
-    RenderErrorReason,
-};
+use handlebars::{Context, Handlebars, Helper, HelperDef, HelperResult, Output, RenderContext, RenderError, RenderErrorReason};
 use std::num::ParseIntError;
 use std::str::FromStr;
 
@@ -68,22 +62,18 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             DateTime::from_timestamp(
                 timestamp.parse().map_err(|e: ParseIntError| {
-                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid seconds timestamp: {}", e), ))
+                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid seconds timestamp: {}", e)))
                 })?,
                 0,
             )
-            .ok_or::<RenderError>(
-                RenderErrorReason::Other("Out-of-range number of seconds".to_string()).into(),
-            )?
+            .ok_or::<RenderError>(RenderErrorReason::Other("Out-of-range number of seconds".to_string()).into())?
         } else if let Some(timestamp) = h.hash_get("from_timestamp_millis") {
             let timestamp = timestamp.render();
 
             DateTime::from_timestamp_millis(timestamp.parse().map_err(|e: ParseIntError| {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid milli-seconds timestamp: {}", e)))
             })?)
-            .ok_or::<RenderError>(
-                RenderErrorReason::Other("Out-of-range number of milliseconds".to_string()).into(),
-            )?
+            .ok_or::<RenderError>(RenderErrorReason::Other("Out-of-range number of milliseconds".to_string()).into())?
         } else if let Some(timestamp) = h.hash_get("from_timestamp_micros") {
             let timestamp = timestamp.render();
 
@@ -91,7 +81,11 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid micro-seconds timestamp: {}", e)))
             })?)
             .ok_or::<RenderError>(
-                RenderErrorReason::Other("Number of microseconds would be out of range for a NaiveDateTime (more than ca. 262,000 years away from common era)".to_string()).into(),
+                RenderErrorReason::Other(
+                    "Number of microseconds would be out of range for a NaiveDateTime (more than ca. 262,000 years away from common era)"
+                        .to_string(),
+                )
+                .into(),
             )?
         } else if let Some(timestamp) = h.hash_get("from_timestamp_nanos") {
             let timestamp = timestamp.render();
@@ -104,7 +98,10 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             DateTime::parse_from_rfc2822(&input_str)
                 .map_err(|e| {
-                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid RFC2822 datetime format: {}", e), ))
+                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!(
+                        "Invalid RFC2822 datetime format: {}",
+                        e
+                    )))
                 })?
                 .to_utc()
         } else if let Some(input_str) = h.hash_get("from_rfc3339") {
@@ -112,7 +109,10 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             DateTime::parse_from_rfc3339(&input_str)
                 .map_err(|e| {
-                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid RFC3339 datetime format: {}", e), ))
+                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!(
+                        "Invalid RFC3339 datetime format: {}",
+                        e
+                    )))
                 })?
                 .to_utc()
         } else if let Some(input_str) = h.hash_get("from_str") {
@@ -122,12 +122,15 @@ impl HelperDef for HandlebarsChronoDateTime {
 
                 NaiveDateTime::parse_from_str(&input_str, &input_format)
                     .map_err(|e| {
-                        <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid datetime format or format doesn't match input: {}", e), ))
+                        <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!(
+                            "Invalid datetime format or format doesn't match input: {}",
+                            e
+                        )))
                     })?
                     .and_utc()
             } else {
                 // error, missing input format
-                return Err(RenderErrorReason::Other("Missing `input_format` hash parameter".to_string(), ).into());
+                return Err(RenderErrorReason::Other("Missing `input_format` hash parameter".to_string()).into());
             }
         } else {
             Utc::now()
@@ -173,18 +176,27 @@ impl HelperDef for HandlebarsChronoDateTime {
                 if let Ok(tz) = FixedOffset::from_str(&timezone) {
                     tz
                 } else {
-                    return Err(RenderErrorReason::Other("Failed to parse timezone offset. Supported values are IANA timezones, local or valid fixed offset".to_string(), ).into());
+                    return Err(RenderErrorReason::Other(
+                        "Failed to parse timezone offset. Supported values are IANA timezones, local or valid fixed offset".to_string(),
+                    )
+                    .into());
                 }
             } else {
                 #[cfg(feature = "timezone")]
                 if let Ok(tz) = timezone.parse::<Tz>() {
                     datetime.with_timezone(&tz).fixed_offset().timezone()
                 } else {
-                    return Err(RenderErrorReason::Other("Failed to parse IANA timezone. Supported values are IANA timezones, local or valid fixed offset".to_string(), ).into());
+                    return Err(RenderErrorReason::Other(
+                        "Failed to parse IANA timezone. Supported values are IANA timezones, local or valid fixed offset".to_string(),
+                    )
+                    .into());
                 }
 
                 #[cfg(not(feature = "timezone"))]
-                return Err(RenderErrorReason::Other("You need to enable the `timezone` feature of the `handlebars-chrono` create for IANA timezones to work.".to_string(), ).into());
+                return Err(RenderErrorReason::Other(
+                    "You need to enable the `timezone` feature of the `handlebars-chrono` create for IANA timezones to work.".to_string(),
+                )
+                .into());
             };
 
             datetime.with_timezone(&tz)
@@ -197,9 +209,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid ordinal parameter: {}", e)))
             })?;
 
-            datetime.with_ordinal(day).ok_or::<RenderError>(
-                RenderErrorReason::Other("Ordinal parameter out of range".to_string()).into(),
-            )?
+            datetime
+                .with_ordinal(day)
+                .ok_or::<RenderError>(RenderErrorReason::Other("Ordinal parameter out of range".to_string()).into())?
         } else {
             datetime
         };
@@ -209,9 +221,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid ordinal parameter: {}", e)))
             })?;
 
-            datetime.with_ordinal0(day).ok_or::<RenderError>(
-                RenderErrorReason::Other("Ordinal parameter out of range".to_string()).into(),
-            )?
+            datetime
+                .with_ordinal0(day)
+                .ok_or::<RenderError>(RenderErrorReason::Other("Ordinal parameter out of range".to_string()).into())?
         } else {
             datetime
         };
@@ -221,9 +233,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid year parameter: {}", e)))
             })?;
 
-            datetime.with_year(year).ok_or::<RenderError>(
-                RenderErrorReason::Other("Year parameter out of range or produces invalid date".to_string(), ).into(),
-            )?
+            datetime
+                .with_year(year)
+                .ok_or::<RenderError>(RenderErrorReason::Other("Year parameter out of range or produces invalid date".to_string()).into())?
         } else {
             datetime
         };
@@ -234,7 +246,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime.with_month(month).ok_or::<RenderError>(
-                RenderErrorReason::Other("Month parameter out of range or produces invalid date".to_string(), ).into(),
+                RenderErrorReason::Other("Month parameter out of range or produces invalid date".to_string()).into(),
             )?
         } else {
             datetime
@@ -246,7 +258,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime.with_month0(month).ok_or::<RenderError>(
-                RenderErrorReason::Other("Month parameter out of range or produces invalid date".to_string(), ).into(),
+                RenderErrorReason::Other("Month parameter out of range or produces invalid date".to_string()).into(),
             )?
         } else {
             datetime
@@ -257,9 +269,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid day parameter: {}", e)))
             })?;
 
-            datetime.with_day(day).ok_or::<RenderError>(
-                RenderErrorReason::Other("Day parameter out of range or produces invalid date".to_string(), ).into(),
-            )?
+            datetime
+                .with_day(day)
+                .ok_or::<RenderError>(RenderErrorReason::Other("Day parameter out of range or produces invalid date".to_string()).into())?
         } else {
             datetime
         };
@@ -269,9 +281,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid day parameter: {}", e)))
             })?;
 
-            datetime.with_day0(day).ok_or::<RenderError>(
-                RenderErrorReason::Other("Day parameter out of range or produces invalid date".to_string(), ).into(),
-            )?
+            datetime
+                .with_day0(day)
+                .ok_or::<RenderError>(RenderErrorReason::Other("Day parameter out of range or produces invalid date".to_string()).into())?
         } else {
             datetime
         };
@@ -281,9 +293,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid hour parameter: {}", e)))
             })?;
 
-            datetime.with_hour(hour).ok_or::<RenderError>(
-                RenderErrorReason::Other("Hour parameter out of range or produces invalid date".to_string(), ).into(),
-            )?
+            datetime
+                .with_hour(hour)
+                .ok_or::<RenderError>(RenderErrorReason::Other("Hour parameter out of range or produces invalid date".to_string()).into())?
         } else {
             datetime
         };
@@ -294,7 +306,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime.with_minute(min).ok_or::<RenderError>(
-                RenderErrorReason::Other("Minute parameter out of range or produces invalid date".to_string(), ).into(),
+                RenderErrorReason::Other("Minute parameter out of range or produces invalid date".to_string()).into(),
             )?
         } else {
             datetime
@@ -306,7 +318,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime.with_second(sec).ok_or::<RenderError>(
-                RenderErrorReason::Other("Second parameter out of range or produces invalid date".to_string(), ).into(),
+                RenderErrorReason::Other("Second parameter out of range or produces invalid date".to_string()).into(),
             )?
         } else {
             datetime
@@ -318,7 +330,7 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime.with_nanosecond(nsec).ok_or::<RenderError>(
-                RenderErrorReason::Other("Nano-second parameter out of range or produces invalid date".to_string(), ).into(),
+                RenderErrorReason::Other("Nano-second parameter out of range or produces invalid date".to_string()).into(),
             )?
         } else {
             datetime
@@ -331,11 +343,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid months parameter: {}", e)))
             })?;
 
-            datetime
-                .checked_add_months(Months::new(months))
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Months parameter out of range or produces invalid date".to_string(), ).into(),
-                )?
+            datetime.checked_add_months(Months::new(months)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Months parameter out of range or produces invalid date".to_string()).into(),
+            )?
         } else {
             datetime
         };
@@ -346,11 +356,12 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime
-                .checked_add_signed(TimeDelta::try_weeks(weeks).ok_or::<RenderError>(
-                    RenderErrorReason::Other("Weeks parameter out of range".to_string()).into(),
-                )?)
+                .checked_add_signed(
+                    TimeDelta::try_weeks(weeks)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Weeks parameter out of range".to_string()).into())?,
+                )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Weeks parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Weeks parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -363,9 +374,7 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             datetime
                 .checked_add_days(Days::new(days))
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Days parameter out of range or produces invalid date".to_string(), ).into(),
-                )?
+                .ok_or::<RenderError>(RenderErrorReason::Other("Days parameter out of range or produces invalid date".to_string()).into())?
         } else {
             datetime
         };
@@ -376,11 +385,12 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime
-                .checked_add_signed(TimeDelta::try_hours(hours).ok_or::<RenderError>(
-                    RenderErrorReason::Other("Hours parameter out of range".to_string()).into(),
-                )?)
+                .checked_add_signed(
+                    TimeDelta::try_hours(hours)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Hours parameter out of range".to_string()).into())?,
+                )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Hours parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Hours parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -392,11 +402,12 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime
-                .checked_add_signed(TimeDelta::try_minutes(min).ok_or::<RenderError>(
-                    RenderErrorReason::Other("Minutes parameter out of range".to_string()).into(),
-                )?)
+                .checked_add_signed(
+                    TimeDelta::try_minutes(min)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Minutes parameter out of range".to_string()).into())?,
+                )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Minutes parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Minutes parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -408,11 +419,12 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime
-                .checked_add_signed(TimeDelta::try_seconds(sec).ok_or::<RenderError>(
-                    RenderErrorReason::Other("Seconds parameter out of range".to_string()).into(),
-                )?)
+                .checked_add_signed(
+                    TimeDelta::try_seconds(sec)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Seconds parameter out of range".to_string()).into())?,
+                )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Seconds parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Seconds parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -425,12 +437,11 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             datetime
                 .checked_add_signed(
-                    TimeDelta::try_milliseconds(msec).ok_or::<RenderError>(
-                        RenderErrorReason::Other("Milli-seconds parameter out of range".to_string(), ).into(),
-                    )?,
+                    TimeDelta::try_milliseconds(msec)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Milli-seconds parameter out of range".to_string()).into())?,
                 )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Milli-seconds parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Milli-seconds parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -441,11 +452,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid micro-seconds parameter: {}", e)))
             })?;
 
-            datetime
-                .checked_add_signed(TimeDelta::microseconds(usec))
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Micro-seconds parameter out of range or produces invalid date".to_string(), ).into(),
-                )?
+            datetime.checked_add_signed(TimeDelta::microseconds(usec)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Micro-seconds parameter out of range or produces invalid date".to_string()).into(),
+            )?
         } else {
             datetime
         };
@@ -455,11 +464,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid nano-seconds parameter: {}", e)))
             })?;
 
-            datetime
-                .checked_add_signed(TimeDelta::nanoseconds(nsec))
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Nano-seconds parameter out of range or produces invalid date".to_string(), ).into(),
-                )?
+            datetime.checked_add_signed(TimeDelta::nanoseconds(nsec)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Nano-seconds parameter out of range or produces invalid date".to_string()).into(),
+            )?
         } else {
             datetime
         };
@@ -471,11 +478,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid months parameter: {}", e)))
             })?;
 
-            datetime
-                .checked_sub_months(Months::new(months))
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Months parameter out of range or produces invalid date".to_string(), ).into(),
-                )?
+            datetime.checked_sub_months(Months::new(months)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Months parameter out of range or produces invalid date".to_string()).into(),
+            )?
         } else {
             datetime
         };
@@ -486,11 +491,12 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime
-                .checked_sub_signed(TimeDelta::try_weeks(weeks).ok_or::<RenderError>(
-                    RenderErrorReason::Other("Weeks parameter out of range".to_string()).into(),
-                )?)
+                .checked_sub_signed(
+                    TimeDelta::try_weeks(weeks)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Weeks parameter out of range".to_string()).into())?,
+                )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Weeks parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Weeks parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -503,9 +509,7 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             datetime
                 .checked_sub_days(Days::new(days))
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Days parameter out of range or produces invalid date".to_string(), ).into(),
-                )?
+                .ok_or::<RenderError>(RenderErrorReason::Other("Days parameter out of range or produces invalid date".to_string()).into())?
         } else {
             datetime
         };
@@ -516,11 +520,12 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime
-                .checked_sub_signed(TimeDelta::try_hours(hours).ok_or::<RenderError>(
-                    RenderErrorReason::Other("Hours parameter out of range".to_string()).into(),
-                )?)
+                .checked_sub_signed(
+                    TimeDelta::try_hours(hours)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Hours parameter out of range".to_string()).into())?,
+                )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Hours parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Hours parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -532,11 +537,12 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime
-                .checked_sub_signed(TimeDelta::try_minutes(min).ok_or::<RenderError>(
-                    RenderErrorReason::Other("Minutes parameter out of range".to_string()).into(),
-                )?)
+                .checked_sub_signed(
+                    TimeDelta::try_minutes(min)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Minutes parameter out of range".to_string()).into())?,
+                )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Minutes parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Minutes parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -548,11 +554,12 @@ impl HelperDef for HandlebarsChronoDateTime {
             })?;
 
             datetime
-                .checked_sub_signed(TimeDelta::try_seconds(sec).ok_or::<RenderError>(
-                    RenderErrorReason::Other("Seconds parameter out of range".to_string()).into(),
-                )?)
+                .checked_sub_signed(
+                    TimeDelta::try_seconds(sec)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Seconds parameter out of range".to_string()).into())?,
+                )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Seconds parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Seconds parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -565,12 +572,11 @@ impl HelperDef for HandlebarsChronoDateTime {
 
             datetime
                 .checked_sub_signed(
-                    TimeDelta::try_milliseconds(msec).ok_or::<RenderError>(
-                        RenderErrorReason::Other("Milli-seconds parameter out of range".to_string(), ).into(),
-                    )?,
+                    TimeDelta::try_milliseconds(msec)
+                        .ok_or::<RenderError>(RenderErrorReason::Other("Milli-seconds parameter out of range".to_string()).into())?,
                 )
                 .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Milli-seconds parameter out of range or produces invalid date".to_string(), ).into(),
+                    RenderErrorReason::Other("Milli-seconds parameter out of range or produces invalid date".to_string()).into(),
                 )?
         } else {
             datetime
@@ -581,11 +587,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid micro-seconds parameter: {}", e)))
             })?;
 
-            datetime
-                .checked_sub_signed(TimeDelta::microseconds(usec))
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Micro-seconds parameter out of range or produces invalid date".to_string(), ).into(),
-                )?
+            datetime.checked_sub_signed(TimeDelta::microseconds(usec)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Micro-seconds parameter out of range or produces invalid date".to_string()).into(),
+            )?
         } else {
             datetime
         };
@@ -595,11 +599,9 @@ impl HelperDef for HandlebarsChronoDateTime {
                 <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!("Invalid nano-seconds parameter: {}", e)))
             })?;
 
-            datetime
-                .checked_sub_signed(TimeDelta::nanoseconds(nsec))
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Nano-seconds parameter out of range or produces invalid date".to_string(), ).into(),
-                )?
+            datetime.checked_sub_signed(TimeDelta::nanoseconds(nsec)).ok_or::<RenderError>(
+                RenderErrorReason::Other("Nano-seconds parameter out of range or produces invalid date".to_string()).into(),
+            )?
         } else {
             datetime
         };
@@ -623,15 +625,20 @@ impl HelperDef for HandlebarsChronoDateTime {
                 #[cfg(feature = "locale")]
                 {
                     let locale = Locale::from_str(&locale).map_err(|_e| {
-                        <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
-                            format!("Invalid locale provided: {}", &locale),
-                        ))
+                        <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!(
+                            "Invalid locale provided: {}",
+                            &locale
+                        )))
                     })?;
 
                     format!("{}", datetime.format_localized(&output_format, locale))
                 }
                 #[cfg(not(feature = "locale"))]
-                return Err(RenderErrorReason::Other(format!("You need to enable the `locale` feature of `handlebars-chrono` for the `locale`={} param to work.", locale)).into())
+                return Err(RenderErrorReason::Other(format!(
+                    "You need to enable the `locale` feature of `handlebars-chrono` for the `locale`={} param to work.",
+                    locale
+                ))
+                .into());
             } else {
                 format!("{}", datetime.format(&output_format))
             }
@@ -644,26 +651,30 @@ impl HelperDef for HandlebarsChronoDateTime {
         } else if h.hash_get("to_timestamp_micros").is_some() {
             datetime.timestamp_micros().to_string()
         } else if h.hash_get("to_timestamp_nanos").is_some() {
-            datetime.timestamp_nanos_opt().ok_or::<RenderError>(
-                RenderErrorReason::Other("An i64 with nanosecond precision can span a range of ~584 years. This timestamp is out of range.".to_string()).into(),
-            )?
-            .to_string()
+            datetime
+                .timestamp_nanos_opt()
+                .ok_or::<RenderError>(
+                    RenderErrorReason::Other(
+                        "An i64 with nanosecond precision can span a range of ~584 years. This timestamp is out of range.".to_string(),
+                    )
+                    .into(),
+                )?
+                .to_string()
         } else if let Some(input_rfc3339) = h.hash_get("years_since") {
             let input_rfc3339 = input_rfc3339.render();
 
             let base_datetime = DateTime::parse_from_rfc3339(&input_rfc3339)
                 .map_err(|e| {
-                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(
-                        format!("Invalid RFC3339 datetime format: {}", e),
-                    ))
+                    <RenderErrorReason as Into<RenderError>>::into(RenderErrorReason::Other(format!(
+                        "Invalid RFC3339 datetime format: {}",
+                        e
+                    )))
                 })?
                 .to_utc();
 
             datetime
                 .years_since(base_datetime.into())
-                .ok_or::<RenderError>(
-                    RenderErrorReason::Other("Negative range, try swapping the parameters.".to_string(), ).into(),
-                )?
+                .ok_or::<RenderError>(RenderErrorReason::Other("Negative range, try swapping the parameters.".to_string()).into())?
                 .to_string()
         } else {
             // DEFAULT to_rfc3339
@@ -701,28 +712,19 @@ mod tests {
         // default to output_format: Utc::now() -> format
         let comparison = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime output_format="%Y-%m-%d %H:%M:%S"}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render format %Y-%m-%d %H:%M:%S"
         );
 
-
         // default to output_format + locale: Utc::now() -> format_localized
         #[cfg(feature = "locale")]
-        let comparison = Utc::now()
-            .format_localized("%A, %B %e", Locale::fr_FR)
-            .to_string();
+        let comparison = Utc::now().format_localized("%A, %B %e", Locale::fr_FR).to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(
-                r#"{{datetime output_format="%A, %B %e" locale="fr_FR"}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime output_format="%A, %B %e" locale="fr_FR"}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C"
         );
@@ -766,12 +768,7 @@ mod tests {
         );
 
         // default to to_timestamp_nanos: Utc::now() -> timestamp_nanos
-        let comparison = Utc::now()
-            .timestamp_nanos_opt()
-            .unwrap_or(0)
-            .to_string()
-            .as_str()[..9]
-            .to_string();
+        let comparison = Utc::now().timestamp_nanos_opt().unwrap_or(0).to_string().as_str()[..9].to_string();
         assert_eq!(
             h.render_template(r#"{{datetime to_timestamp_nanos=true}}"#, &String::new())
                 .map(|v| v.as_str()[..9].to_string())
@@ -792,11 +789,8 @@ mod tests {
             .unwrap_or(0)
             .to_string();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime years_since="1985-06-16T12:00:00Z"}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render years since"
         );
@@ -835,8 +829,11 @@ mod tests {
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp="618658211" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp="618658211" output_format="%A, %B %C" locale="fr_FR"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C from timestamp"
         );
@@ -844,26 +841,17 @@ mod tests {
         // from_timestamp to to_rfc2822: from_timestamp -> to_rfc2822
         let comparison = DateTime::from_timestamp(618658211, 0).unwrap().to_rfc2822();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime from_timestamp="618658211" to_rfc2822=true}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime from_timestamp="618658211" to_rfc2822=true}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render RFC2822 from timestamp"
         );
 
         // from_timestamp to to_timestamp: from_timestamp -> timestamp
-        let comparison = DateTime::from_timestamp(618658211, 0)
-            .unwrap()
-            .timestamp()
-            .to_string();
+        let comparison = DateTime::from_timestamp(618658211, 0).unwrap().timestamp().to_string();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime from_timestamp="618658211" to_timestamp=true}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime from_timestamp="618658211" to_timestamp=true}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render timestamp from timestamp"
         );
@@ -915,12 +903,9 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime from_timestamp="618658211" to_timestamp_nanos=true}}"#,
-                &String::new()
-            )
-            .map(|v| v.as_str()[..9].to_string())
-            .expect("Render error"),
+            h.render_template(r#"{{datetime from_timestamp="618658211" to_timestamp_nanos=true}}"#, &String::new())
+                .map(|v| v.as_str()[..9].to_string())
+                .expect("Render error"),
             comparison,
             "Failed to render timestamp in nano-seconds from timestamp"
         );
@@ -951,7 +936,7 @@ mod tests {
                 r#"{{datetime from_timestamp="618658211" years_since=(datetime from_timestamp="487771200")}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render years since from timestamp"
         );
@@ -959,15 +944,10 @@ mod tests {
         //
 
         // from_timestamp_millis to default: from_timestamp_millis -> to_rfc3339
-        let comparison = DateTime::from_timestamp_millis(618658211123)
-            .unwrap()
-            .to_rfc3339();
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().to_rfc3339();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime from_timestamp_millis="618658211123"}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime from_timestamp_millis="618658211123"}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render RFC3339 from timestamp in milli-seconds"
         );
@@ -978,8 +958,11 @@ mod tests {
             .format("%Y-%m-%d %H:%M:%S")
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_millis="618658211123" output_format="%Y-%m-%d %H:%M:%S"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render format %Y-%m-%d %H:%M:%S from timestamp in milli-seconds"
         );
@@ -992,16 +975,17 @@ mod tests {
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" output_format="%A, %B %e" locale="fr_FR"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_millis="618658211123" output_format="%A, %B %e" locale="fr_FR"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C from timestamp in milli-seconds"
         );
 
         // from_timestamp_millis to to_rfc2822: from_timestamp_millis -> to_rfc2822
-        let comparison = DateTime::from_timestamp_millis(618658211123)
-            .unwrap()
-            .to_rfc2822();
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().to_rfc2822();
         assert_eq!(
             h.render_template(
                 r#"{{datetime from_timestamp_millis="618658211123" to_rfc2822=true}}"#,
@@ -1013,10 +997,7 @@ mod tests {
         );
 
         // from_timestamp_millis to to_timestamp: from_timestamp_millis -> timestamp
-        let comparison = DateTime::from_timestamp_millis(618658211123)
-            .unwrap()
-            .timestamp()
-            .to_string();
+        let comparison = DateTime::from_timestamp_millis(618658211123).unwrap().timestamp().to_string();
         assert_eq!(
             h.render_template(
                 r#"{{datetime from_timestamp_millis="618658211123" to_timestamp=true}}"#,
@@ -1095,8 +1076,11 @@ mod tests {
             .unwrap_or(0)
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_millis="618658211123" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_millis="618658211123" years_since="1985-06-16T12:00:00Z"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render years since from timestamp in milli-seconds"
         );
@@ -1104,15 +1088,10 @@ mod tests {
         //
 
         // from_timestamp_micros to default: from_timestamp_micros -> to_rfc3339
-        let comparison = DateTime::from_timestamp_micros(618658211123456)
-            .unwrap()
-            .to_rfc3339();
+        let comparison = DateTime::from_timestamp_micros(618658211123456).unwrap().to_rfc3339();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime from_timestamp_micros="618658211123456"}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime from_timestamp_micros="618658211123456"}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render RFC3339 from timestamp in micro-seconds"
         );
@@ -1123,8 +1102,11 @@ mod tests {
             .format("%Y-%m-%d %H:%M:%S")
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_micros="618658211123456" output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_micros="618658211123456" output_format="%Y-%m-%d %H:%M:%S"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render format %Y-%m-%d %H:%M:%S from timestamp in micro-seconds"
         );
@@ -1137,16 +1119,17 @@ mod tests {
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_micros="618658211123456" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_micros="618658211123456" output_format="%A, %B %C" locale="fr_FR"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C from timestamp in micro-seconds"
         );
 
         // from_timestamp_micros to to_rfc2822: from_timestamp_micros -> to_rfc2822
-        let comparison = DateTime::from_timestamp_micros(618658211123456)
-            .unwrap()
-            .to_rfc2822();
+        let comparison = DateTime::from_timestamp_micros(618658211123456).unwrap().to_rfc2822();
         assert_eq!(
             h.render_template(
                 r#"{{datetime from_timestamp_micros="618658211123456" to_rfc2822=true}}"#,
@@ -1158,10 +1141,7 @@ mod tests {
         );
 
         // from_timestamp_micros to to_timestamp: from_timestamp_micros -> timestamp
-        let comparison = DateTime::from_timestamp_micros(618658211123456)
-            .unwrap()
-            .timestamp()
-            .to_string();
+        let comparison = DateTime::from_timestamp_micros(618658211123456).unwrap().timestamp().to_string();
         assert_eq!(
             h.render_template(
                 r#"{{datetime from_timestamp_micros="618658211123456" to_timestamp=true}}"#,
@@ -1240,8 +1220,11 @@ mod tests {
             .unwrap_or(0)
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_micros="618658211123456" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_micros="618658211123456" years_since="1985-06-16T12:00:00Z"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render years since from timestamp in micro-seconds"
         );
@@ -1251,11 +1234,8 @@ mod tests {
         // from_timestamp_nanos to default: from_timestamp_nanos -> to_rfc3339
         let comparison = DateTime::from_timestamp_nanos(618658211123456789).to_rfc3339();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime from_timestamp_nanos="618658211123456789"}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789"}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render RFC3339 from timestamp in nano-seconds"
         );
@@ -1265,8 +1245,11 @@ mod tests {
             .format("%Y-%m-%d %H:%M:%S")
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789" output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_nanos="618658211123456789" output_format="%Y-%m-%d %H:%M:%S"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render format %Y-%m-%d %H:%M:%S from timestamp in nano-seconds"
         );
@@ -1278,8 +1261,11 @@ mod tests {
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_nanos="618658211123456789" output_format="%A, %B %C" locale="fr_FR"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C from timestamp in nano-seconds"
         );
@@ -1297,9 +1283,7 @@ mod tests {
         );
 
         // from_timestamp_nanos to to_timestamp: from_timestamp_nanos -> timestamp
-        let comparison = DateTime::from_timestamp_nanos(618658211123456789)
-            .timestamp()
-            .to_string();
+        let comparison = DateTime::from_timestamp_nanos(618658211123456789).timestamp().to_string();
         assert_eq!(
             h.render_template(
                 r#"{{datetime from_timestamp_nanos="618658211123456789" to_timestamp=true}}"#,
@@ -1317,9 +1301,12 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789" to_timestamp_millis=true}}"#, &String::new())
-                .map(|v| v.as_str()[..9].to_string())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_nanos="618658211123456789" to_timestamp_millis=true}}"#,
+                &String::new()
+            )
+            .map(|v| v.as_str()[..9].to_string())
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp in milli-seconds from timestamp in nano-seconds"
         );
@@ -1331,9 +1318,12 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789" to_timestamp_micros=true}}"#, &String::new())
-                .map(|v| v.as_str()[..9].to_string())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_nanos="618658211123456789" to_timestamp_micros=true}}"#,
+                &String::new()
+            )
+            .map(|v| v.as_str()[..9].to_string())
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp in micro-seconds from timestamp in nano-seconds"
         );
@@ -1368,8 +1358,11 @@ mod tests {
             .unwrap_or(0)
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_timestamp_nanos="618658211123456789" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_timestamp_nanos="618658211123456789" years_since="1985-06-16T12:00:00Z"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render years since from timestamp in nano-seconds"
         );
@@ -1382,11 +1375,8 @@ mod tests {
             .to_utc()
             .to_rfc3339();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200"}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200"}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render RFC3339 from RFC2822"
         );
@@ -1398,8 +1388,11 @@ mod tests {
             .format("%Y-%m-%d %H:%M:%S")
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" output_format="%Y-%m-%d %H:%M:%S"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render format %Y-%m-%d %H:%M:%S from RFC2822"
         );
@@ -1413,8 +1406,11 @@ mod tests {
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" output_format="%A, %B %C" locale="fr_FR"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C from RFC2822"
         );
@@ -1459,9 +1455,12 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_millis=true}}"#, &String::new())
-                .map(|v| v.as_str()[..9].to_string())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_millis=true}}"#,
+                &String::new()
+            )
+            .map(|v| v.as_str()[..9].to_string())
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp in milli-seconds from RFC2822"
         );
@@ -1475,9 +1474,12 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_micros=true}}"#, &String::new())
-                .map(|v| v.as_str()[..9].to_string())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_micros=true}}"#,
+                &String::new()
+            )
+            .map(|v| v.as_str()[..9].to_string())
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp in micro-seconds from RFC2822"
         );
@@ -1492,9 +1494,12 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_nanos=true}}"#, &String::new())
-                .map(|v| v.as_str()[..9].to_string())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" to_timestamp_nanos=true}}"#,
+                &String::new()
+            )
+            .map(|v| v.as_str()[..9].to_string())
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp in nano-seconds from RFC2822"
         );
@@ -1513,8 +1518,11 @@ mod tests {
             .unwrap_or(0)
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc2822="Wed, 09 Aug 1989 09:30:11 +0200" years_since="1985-06-16T12:00:00Z"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render years since from RFC2822"
         );
@@ -1527,11 +1535,8 @@ mod tests {
             .to_utc()
             .to_rfc3339();
         assert_eq!(
-            h.render_template(
-                r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00"}}"#,
-                &String::new()
-            )
-            .expect("Render error"),
+            h.render_template(r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00"}}"#, &String::new())
+                .expect("Render error"),
             comparison,
             "Failed to render RFC3339 from RFC3339"
         );
@@ -1543,8 +1548,11 @@ mod tests {
             .format("%Y-%m-%d %H:%M:%S")
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" output_format="%Y-%m-%d %H:%M:%S"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" output_format="%Y-%m-%d %H:%M:%S"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render format %Y-%m-%d %H:%M:%S from RFC3339"
         );
@@ -1558,8 +1566,11 @@ mod tests {
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" output_format="%A, %B %C" locale="fr_FR"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C from RFC3339"
         );
@@ -1667,8 +1678,11 @@ mod tests {
             .unwrap_or(0)
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" years_since="1985-06-16T12:00:00Z"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render years since from RFC3339"
         );
@@ -1699,8 +1713,11 @@ mod tests {
             .format("%Y-%d-%m %H:%M")
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" output_format="%Y-%d-%m %H:%M"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" output_format="%Y-%d-%m %H:%M"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render format %Y-%d-%m %H:%M from %Y-%m-%d %H:%M:%S string"
         );
@@ -1714,8 +1731,11 @@ mod tests {
             .to_string();
         #[cfg(feature = "locale")]
         assert_eq!(
-            h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" output_format="%A, %B %C" locale="fr_FR"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" output_format="%A, %B %C" locale="fr_FR"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render localized format %A, %B %C from %Y-%m-%d %H:%M:%S string"
         );
@@ -1726,8 +1746,11 @@ mod tests {
             .and_utc()
             .to_rfc2822();
         assert_eq!(
-            h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_rfc2822=true}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_rfc2822=true}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render RFC2822 from %Y-%m-%d %H:%M:%S string"
         );
@@ -1739,8 +1762,11 @@ mod tests {
             .timestamp()
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_timestamp=true}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_timestamp=true}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp from %Y-%m-%d %H:%M:%S string"
         );
@@ -1754,9 +1780,12 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_timestamp_millis=true}}"#, &String::new())
-                .map(|v| v.as_str()[..9].to_string())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_timestamp_millis=true}}"#,
+                &String::new()
+            )
+            .map(|v| v.as_str()[..9].to_string())
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp in milli-seconds from %Y-%m-%d %H:%M:%S string"
         );
@@ -1770,9 +1799,12 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_timestamp_micros=true}}"#, &String::new())
-                .map(|v| v.as_str()[..9].to_string())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_timestamp_micros=true}}"#,
+                &String::new()
+            )
+            .map(|v| v.as_str()[..9].to_string())
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp in micro-seconds from %Y-%m-%d %H:%M:%S string"
         );
@@ -1787,9 +1819,12 @@ mod tests {
             .as_str()[..9]
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_timestamp_nanos=true}}"#, &String::new())
-                .map(|v| v.as_str()[..9].to_string())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" to_timestamp_nanos=true}}"#,
+                &String::new()
+            )
+            .map(|v| v.as_str()[..9].to_string())
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp in nano-seconds from %Y-%m-%d %H:%M:%S string"
         );
@@ -1808,8 +1843,11 @@ mod tests {
             .unwrap_or(0)
             .to_string();
         assert_eq!(
-            h.render_template(r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" years_since="1985-06-16T12:00:00Z"}}"#, &String::new())
-                .expect("Render error"),
+            h.render_template(
+                r#"{{datetime from_str="1989-08-09 09:30:11" input_format="%Y-%m-%d %H:%M:%S" years_since="1985-06-16T12:00:00Z"}}"#,
+                &String::new()
+            )
+            .expect("Render error"),
             comparison,
             "Failed to render years since from %Y-%m-%d %H:%M:%S string"
         );
@@ -1828,7 +1866,7 @@ mod tests {
                 r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" with_timezone="America/Edmonton"}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render RFC3339 from RFC3339 with timezone America/Edmonton"
         );
@@ -2035,7 +2073,7 @@ mod tests {
                 r#"{{datetime from_timestamp="618658211" with_nanosecond="123456789" to_timestamp_nanos=true}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp from timestamp with nano-second 123456789"
         );
@@ -2147,7 +2185,7 @@ mod tests {
                 r#"{{datetime from_timestamp="618658211" add_milliseconds="42" to_timestamp_millis=true}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp from timestamp plus 42 milli-seconds"
         );
@@ -2163,7 +2201,7 @@ mod tests {
                 r#"{{datetime from_timestamp="618658211" add_microseconds="123" to_timestamp_micros=true}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp from timestamp plus 123 micro-seconds"
         );
@@ -2180,7 +2218,7 @@ mod tests {
                 r#"{{datetime from_timestamp="618658211" add_nanoseconds="123456789" to_timestamp_nanos=true}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp from timestamp plus 123456789 nano-seconds"
         );
@@ -2292,7 +2330,7 @@ mod tests {
                 r#"{{datetime from_timestamp="618658211" sub_milliseconds="42" to_timestamp_millis=true}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp from timestamp minus 42 milli-seconds"
         );
@@ -2308,7 +2346,7 @@ mod tests {
                 r#"{{datetime from_timestamp="618658211" sub_microseconds="123" to_timestamp_micros=true}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp from timestamp minus 123 micro-seconds"
         );
@@ -2325,7 +2363,7 @@ mod tests {
                 r#"{{datetime from_timestamp="618658211" sub_nanoseconds="123456789" to_timestamp_nanos=true}}"#,
                 &String::new()
             )
-                .expect("Render error"),
+            .expect("Render error"),
             comparison,
             "Failed to render timestamp from timestamp minus 123456789 nano-seconds"
         );
@@ -2428,10 +2466,7 @@ mod tests {
 
         assert!(
             matches!(
-                h.render_template(
-                    r#"{{datetime from_str="1985-06-16T12:00:00Z" to_timestamp=true}}"#,
-                    &String::new()
-                ),
+                h.render_template(r#"{{datetime from_str="1985-06-16T12:00:00Z" to_timestamp=true}}"#, &String::new()),
                 Err(_e)
             ),
             "Failed to produce error with invalid datetime str and format"
@@ -2453,10 +2488,7 @@ mod tests {
         #[cfg(feature = "locale")]
         assert!(
             matches!(
-                h.render_template(
-                    r#"{{datetime output_format="%A, %B %C" locale="GAGA"}}"#,
-                    &String::new()
-                ),
+                h.render_template(r#"{{datetime output_format="%A, %B %C" locale="GAGA"}}"#, &String::new()),
                 Err(_e)
             ),
             "Failed to produce error with invalid locale"
@@ -2471,6 +2503,61 @@ mod tests {
                 Err(_e)
             ),
             "Failed to produce error with invalid years since base date"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" with_timezone="-2500"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid offset"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" with_timezone="Plovdiv"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid timezone name"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" with_ordinal="above9000"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid ordinal"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" with_ordinal0="above9000"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid ordinal0"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" with_year="above9000"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid year"
         );
     }
 }
