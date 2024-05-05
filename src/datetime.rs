@@ -2673,6 +2673,17 @@ mod tests {
         assert!(
             matches!(
                 h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" add_days="many"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid days"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
                     r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" add_hours="many"}}"#,
                     &String::new()
                 ),
@@ -2729,6 +2740,105 @@ mod tests {
             matches!(
                 h.render_template(
                     r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" add_nanoseconds="some nanos"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid nanoseconds"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_months="june"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid month"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_weeks="many"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid weeks"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_days="many"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid days"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_hours="many"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid hours"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_minutes="many"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid minutes"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_seconds="seven"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid seconds"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_milliseconds="a little"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid milliseconds"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_microseconds="some micros"}}"#,
+                    &String::new()
+                ),
+                Err(_e),
+            ),
+            "Failed to produce error with invalid microseconds"
+        );
+
+        assert!(
+            matches!(
+                h.render_template(
+                    r#"{{datetime from_rfc3339="1989-08-09T09:30:11+02:00" sub_nanoseconds="some nanos"}}"#,
                     &String::new()
                 ),
                 Err(_e),
