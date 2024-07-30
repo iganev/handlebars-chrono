@@ -16,6 +16,10 @@ Optional features:
 - `locale` includes `unstable-locales` in `chrono` and enables the `locale` parameter to produce localized timestamps
 - `timezone` includes `chrono-tz` and enables parsing IANA timezone names passed as `timezone` parameter
 
+### Versions
+Versions `0.1.*` are compatible with handlebars `5`.  
+Versions `0.2.*` are compatible with handlebars `6`.  
+
 ### Include
 
 Add to `Cargo.toml`:
