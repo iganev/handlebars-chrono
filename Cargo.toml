@@ -1,6 +1,6 @@
 [package]
 name = "handlebars-chrono"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Ivan Ganev <iganev@cytec.bg>"]
 description = "Handlebars helper for using chrono DateTime"
@@ -22,8 +22,8 @@ timezone = [ "dep:chrono-tz"]
 
 [dependencies]
 handlebars = { version = "6" }
-chrono = { version = "0.4", features = ["serde"] }
-chrono-tz = { version = "0.9", optional = true }
+chrono = { version = ">=0.4.20", features = ["serde"] }
+chrono-tz = { version = "0.10", optional = true }
 
 [dev-dependencies]
 serde_json = { version = "1" }
